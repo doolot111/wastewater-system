@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>Система очистки бытовых сточных вод</title>
 
@@ -41,13 +41,103 @@ B&R Minicontrol
 </div>
 
 <div class="status-item">
-TC65
+Siemens TC65
+</div>
+
+<div class="status-item">
+MegaCom
 </div>
 
 </div>
 
 
 <div class="container">
+
+<div class="card">
+
+<h2>Состояние оборудования</h2>
+
+<p>Modicon Micro:
+{{data.modicon}}</p>
+
+<p>B&R Minicontrol:
+{{data.br}}</p>
+
+<p>TC65:
+{{data.tc65}}</p>
+
+<p>Сигнал:
+{{data.signal}}</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Технологические параметры</h2>
+
+<p>Уровень воды:
+<span id="water">68</span>%
+</p>
+
+<p>Температура:
+<span id="temp">24</span>°C
+</p>
+
+<p>Расход:
+{{data.flow}} м³/ч
+</p>
+
+<p>pH:
+{{data.ph}}
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Исполнительные устройства</h2>
+
+<p>Насос №1:
+<span id="pumpStatus">
+{{data.pump1}}
+</span>
+</p>
+
+<p>Насос №2:
+{{data.pump2}}
+</p>
+
+<p>Аэратор:
+{{data.aerator}}
+</p>
+
+<p>Режим:
+{{data.mode}}
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Управление</h2>
+
+<button onclick="pumpOn()">
+Включить насос
+</button>
+
+<button onclick="pumpOff()">
+Выключить насос
+</button>
+
+<button onclick="addEvent('Обновление данных')">
+Обновить
+</button>
+
+</div>
+
 
 <div class="card">
 
@@ -61,13 +151,13 @@ TC65
 
 <div class="flow"></div>
 
-<div class="pump" id="pumpAnim">
+<div id="pumpAnim" class="pump">
 Насос
 </div>
 
 <div class="flow"></div>
 
-<div class="tank aeration">
+<div class="tank">
 Аэрация
 </div>
 
@@ -90,22 +180,12 @@ TC65
 
 <div class="card">
 
-<h2>Параметры</h2>
-
-<p>Уровень воды:
-<span id="water">
-68
-</span>%
-</p>
-
-<p>Температура:
-<span id="temp">
-24
-</span>°C
-</p>
+<h2>Аварии</h2>
 
 <p id="alarm">
+
 Аварий не обнаружено
+
 </p>
 
 </div>
@@ -113,22 +193,7 @@ TC65
 
 <div class="card">
 
-<h2>Управление</h2>
-
-<button onclick="pumpOn()">
-Включить насос
-</button>
-
-<button onclick="pumpOff()">
-Выключить насос
-</button>
-
-</div>
-
-
-<div class="card">
-
-<h2>Журнал</h2>
+<h2>Журнал событий</h2>
 
 <div id="events">
 
@@ -147,30 +212,24 @@ TC65
 
 </div>
 
+
+<div class="card">
+
+<h2>Температура</h2>
+
+<canvas id="tempChart"></canvas>
+
 </div>
 
+</div>
 
 <script>
-
-function addEvent(text){
-
-let time=new Date().toLocaleTimeString();
-
-document.getElementById(
-"events"
-).innerHTML +=
-
-"<p>"+time+" : "+text+"</p>";
-
-}
-
 
 function updateClock(){
 
 document.getElementById(
 "clock"
 ).innerHTML=
-
 new Date().toLocaleTimeString();
 
 }
@@ -180,8 +239,32 @@ updateClock,
 1000
 );
 
+updateClock();
+
+
+function addEvent(text){
+
+let time=
+new Date().toLocaleTimeString();
+
+document.getElementById(
+"events"
+).innerHTML +=
+
+"<p>"+time+
+" : "+
+text+
+"</p>";
+
+}
+
 
 function pumpOn(){
+
+document.getElementById(
+"pumpStatus"
+).innerHTML=
+"Включен";
 
 document.getElementById(
 "pumpAnim"
@@ -195,7 +278,13 @@ addEvent(
 
 }
 
+
 function pumpOff(){
+
+document.getElementById(
+"pumpStatus"
+).innerHTML=
+"Выключен";
 
 document.getElementById(
 "pumpAnim"
@@ -211,62 +300,88 @@ addEvent(
 
 
 const waterData=[68];
+const tempData=[24];
 
-const chart=
+
+const waterChart=
 new Chart(
 document.getElementById(
 "waterChart"
 ),
 {
 type:'line',
-
 data:{
-
 labels:['1'],
-
 datasets:[{
-
 label:'Уровень',
-
 data:waterData
-
 }]
-
 }
+}
+);
 
+
+const tempChart=
+new Chart(
+document.getElementById(
+"tempChart"
+),
+{
+type:'line',
+data:{
+labels:['1'],
+datasets:[{
+label:'Температура',
+data:tempData
+}]
+}
 }
 );
 
 
 setInterval(()=>{
 
-let value=
-
+let water=
 60+
-
 Math.floor(
 Math.random()*30
+);
+
+let temp=
+20+
+Math.floor(
+Math.random()*10
 );
 
 document.getElementById(
 "water"
 ).innerHTML=
-value;
+water;
+
+document.getElementById(
+"temp"
+).innerHTML=
+temp;
 
 waterData.push(
-value
+water
 );
 
-chart.update();
+tempData.push(
+temp
+);
+
+waterChart.update();
+
+tempChart.update();
 
 
-if(value>85){
+if(water>85){
 
 document.getElementById(
 "alarm"
 ).innerHTML=
-
-"Предупреждение: высокий уровень воды";
+"Высокий уровень воды";
 
 document.getElementById(
 "lamp"
@@ -274,17 +389,15 @@ document.getElementById(
 "red";
 
 addEvent(
-"Авария уровня воды"
+"Аварийное состояние"
 );
 
 }
-
 else{
 
 document.getElementById(
 "alarm"
 ).innerHTML=
-
 "Аварий не обнаружено";
 
 document.getElementById(
