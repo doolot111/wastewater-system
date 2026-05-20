@@ -215,20 +215,7 @@ def logout():
     return redirect("/")
 
 
-if __name__=="__main__":
-
-    port=int(
-    os.environ.get(
-    "PORT",
-    5000
-    )
-    )
-
-    app.run(
-    host="0.0.0.0",
-    port=port
-    )
-    @app.route("/report")
+@app.route("/report")
 def report():
 
     if "user" not in session:
@@ -313,4 +300,19 @@ def report():
     return send_file(
         file,
         as_attachment=True
+    )
+
+
+if __name__=="__main__":
+
+    port=int(
+    os.environ.get(
+    "PORT",
+    5000
+    )
+    )
+
+    app.run(
+    host="0.0.0.0",
+    port=port
     )
