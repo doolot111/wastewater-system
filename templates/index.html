@@ -432,10 +432,8 @@ document.getElementById(
 <table>
 
 <tr>
-
 <th>Уровень</th>
 <th>Температура</th>
-
 </tr>
 
 {% for row in history %}
@@ -443,12 +441,17 @@ document.getElementById(
 <tr>
 
 <td>{{row.water}}%</td>
-
 <td>{{row.temperature}}°C</td>
 
 </tr>
 
 {% endfor %}
+
+</table>
+
+</div>
+
+
 <div class="card">
 
 <h2>Журнал аварий</h2>
@@ -458,7 +461,6 @@ document.getElementById(
 <tr>
 
 <th>Время</th>
-
 <th>Сообщение</th>
 
 </tr>
@@ -467,17 +469,8 @@ document.getElementById(
 
 <tr>
 
-<td>
-
-{{alarm.time}}
-
-</td>
-
-<td>
-
-{{alarm.message}}
-
-</td>
+<td>{{alarm.time}}</td>
+<td>{{alarm.message}}</td>
 
 </tr>
 
