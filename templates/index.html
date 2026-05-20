@@ -425,5 +425,33 @@ document.getElementById(
 АВАРИЯ: высокий уровень воды
 
 </div>
+<div class="card">
+
+<h2>История параметров</h2>
+
+<table>
+
+<tr>
+
+<th>Уровень</th>
+<th>Температура</th>
+
+</tr>
+
+{% for row in history %}
+
+<tr>
+
+<td>{{row[0]}}%</td>
+
+<td>{{row[1]}}°C</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
 </body>
 </html>
