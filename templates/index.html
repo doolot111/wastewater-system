@@ -157,7 +157,7 @@ MegaCom
 
 <div class="flow"></div>
 
-<div class="tank">
+<div class="tank aeration">
 Аэрация
 </div>
 
@@ -388,6 +388,11 @@ document.getElementById(
 ).className=
 "red";
 
+document.getElementById(
+"popup"
+).style.display=
+"block";
+
 addEvent(
 "Аварийное состояние"
 );
@@ -405,11 +410,20 @@ document.getElementById(
 ).className=
 "green";
 
+document.getElementById(
+"popup"
+).style.display=
+"none";
+
 }
 
 },3000);
 
 </script>
+<div id="popup">
 
+АВАРИЯ: высокий уровень воды
+
+</div>
 </body>
 </html>
