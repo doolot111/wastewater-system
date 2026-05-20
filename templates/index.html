@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-
 <html lang="ru">
 
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Система очистки бытовых сточных вод</title>
 
@@ -21,6 +21,8 @@ href="{{ url_for('static',filename='style.css') }}">
 
 <h1>Система очистки бытовых сточных вод</h1>
 
+<div id="clock"></div>
+
 </div>
 
 
@@ -28,13 +30,7 @@ href="{{ url_for('static',filename='style.css') }}">
 
 <div class="status-item">
 
-<span id="statusLamp" class="green"></span>
-
-Система активна
-
-</div>
-
-<div class="status-item">
+<span class="green"></span>
 
 Modicon Micro
 
@@ -42,17 +38,27 @@ Modicon Micro
 
 <div class="status-item">
 
+<span class="green"></span>
+
 B&R Minicontrol
 
 </div>
 
 <div class="status-item">
 
-TC65
+<span class="green"></span>
+
+Siemens TC65
 
 </div>
 
-<div id="clock"></div>
+<div class="status-item">
+
+<span class="green"></span>
+
+MegaCom
+
+</div>
 
 </div>
 
@@ -61,22 +67,15 @@ TC65
 
 <div class="card">
 
-<h2>Оборудование</h2>
+<h2>Состояние оборудования</h2>
 
-<p>Modicon Micro:
-{{data.modicon}}</p>
+<p>Modicon: {{data.modicon}}</p>
 
-<p>B&R Minicontrol:
-{{data.br}}</p>
+<p>B&R: {{data.br}}</p>
 
-<p>Siemens TC65:
-{{data.tc65}}</p>
+<p>TC65: {{data.tc65}}</p>
 
-<p>Оператор:
-{{data.operator}}</p>
-
-<p>Уровень сигнала:
-{{data.signal}}</p>
+<p>Сигнал: {{data.signal}}</p>
 
 </div>
 
@@ -85,50 +84,20 @@ TC65
 
 <h2>Технологические параметры</h2>
 
-<p>
-
-Уровень сточных вод:
-
-<span id="water">
-
-{{data.water_level}}
-
-</span>
-
-%
-
+<p>Уровень воды:
+<span id="water">{{data.water_level}}</span>%
 </p>
 
-<p>
-
-Температура:
-
-<span id="temp">
-
-{{data.temperature}}
-
-</span>
-
-°C
-
+<p>Температура:
+<span id="temp">{{data.temperature}}</span>°C
 </p>
 
-<p>
-
-Расход:
-
-{{data.flow}}
-
-м³/ч
-
+<p>Расход:
+{{data.flow}} м³/ч
 </p>
 
-<p>
-
-pH:
-
+<p>pH:
 {{data.ph}}
-
 </p>
 
 </div>
@@ -138,40 +107,16 @@ pH:
 
 <h2>Исполнительные устройства</h2>
 
-<p>
-
-Насос №1:
-
-<span id="pump">
-
-{{data.pump1}}
-
-</span>
-
+<p>Насос №1:
+<span id="pump">Включен</span>
 </p>
 
-<p>
-
-Насос №2:
-
-{{data.pump2}}
-
+<p>Насос №2:
+Выключен
 </p>
 
-<p>
-
-Аэратор:
-
-{{data.aerator}}
-
-</p>
-
-<p>
-
-Режим:
-
-{{data.mode}}
-
+<p>Аэратор:
+Включен
 </p>
 
 </div>
@@ -193,7 +138,7 @@ pH:
 
 </button>
 
-<button onclick="refreshData()">
+<button onclick="addEvent('Обновление данных')">
 
 Обновить
 
@@ -204,13 +149,57 @@ pH:
 
 <div class="card">
 
-<h2>Аварии</h2>
+<h2>Технологическая схема</h2>
 
-<p id="alarm">
+<div class="scheme">
 
-Аварий не обнаружено
+<div class="tank">
+Приёмный резервуар
+</div>
 
-</p>
+<div class="arrow">→</div>
+
+<div class="tank">
+Насосы
+</div>
+
+<div class="arrow">→</div>
+
+<div class="tank">
+Аэрация
+</div>
+
+<div class="arrow">→</div>
+
+<div class="tank">
+Отстойник
+</div>
+
+<div class="arrow">→</div>
+
+<div class="tank">
+Очищенная вода
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h2>Уровень воды</h2>
+
+<canvas id="waterChart"></canvas>
+
+</div>
+
+
+<div class="card">
+
+<h2>Температура</h2>
+
+<canvas id="tempChart"></canvas>
 
 </div>
 
@@ -227,24 +216,6 @@ pH:
 
 </div>
 
-
-<div class="card">
-
-<h2>График уровня воды</h2>
-
-<canvas id="waterChart"></canvas>
-
-</div>
-
-
-<div class="card">
-
-<h2>График температуры</h2>
-
-<canvas id="tempChart"></canvas>
-
-</div>
-
 </div>
 
 
@@ -257,18 +228,13 @@ let now=new Date();
 document.getElementById(
 "clock"
 ).innerHTML=
-
 now.toLocaleTimeString();
 
 }
 
-setInterval(
-updateClock,
-1000
-);
+setInterval(updateClock,1000);
 
 updateClock();
-
 
 
 function addEvent(text){
@@ -277,36 +243,20 @@ let time=
 new Date()
 .toLocaleTimeString();
 
-document
-.getElementById(
+document.getElementById(
 "events"
-)
-.innerHTML +=
+).innerHTML+=
 
-"<p>"+
-
-time+
-
-" : "+
-
-text+
-
-"</p>";
+"<p>"+time+" : "+text+"</p>";
 
 }
 
 
-
 function pumpOn(){
 
-document
-.getElementById(
+document.getElementById(
 "pump"
-)
-.innerHTML=
-
-"Включен";
-
+).innerHTML="Включен";
 
 addEvent(
 "Насос включен"
@@ -314,18 +264,11 @@ addEvent(
 
 }
 
-
-
 function pumpOff(){
 
-document
-.getElementById(
+document.getElementById(
 "pump"
-)
-.innerHTML=
-
-"Выключен";
-
+).innerHTML="Выключен";
 
 addEvent(
 "Насос выключен"
@@ -335,119 +278,65 @@ addEvent(
 
 
 
-function refreshData(){
-
-addEvent(
-"Данные обновлены"
-);
-
-}
-
-
-
 const waterData=[68];
 const tempData=[24];
+
 
 const waterChart=
 
 new Chart(
-
-document.getElementById(
-"waterChart"
-),
-
+document.getElementById("waterChart"),
 {
-
 type:'line',
-
 data:{
-
 labels:['1'],
-
 datasets:[{
-
-label:'Уровень воды',
-
+label:'Уровень',
 data:waterData
-
 }]
-
 }
-
-}
-
-);
+});
 
 
 const tempChart=
 
 new Chart(
-
-document.getElementById(
-"tempChart"
-),
-
+document.getElementById("tempChart"),
 {
-
 type:'line',
-
 data:{
-
 labels:['1'],
-
 datasets:[{
-
 label:'Температура',
-
 data:tempData
-
 }]
-
 }
-
-}
-
-);
+});
 
 
 setInterval(()=>{
 
-
 let water=
-
 60+
-
 Math.floor(
-Math.random()*30
+Math.random()*25
 );
-
 
 let temp=
-
 20+
-
 Math.floor(
-Math.random()*10
+Math.random()*8
 );
 
-
-document
-.getElementById(
+document.getElementById(
 "water"
-)
-.innerHTML=
-
+).innerHTML=
 water;
 
-
-document
-.getElementById(
+document.getElementById(
 "temp"
-)
-.innerHTML=
-
+).innerHTML=
 temp;
-
 
 waterData.push(
 water
@@ -457,58 +346,9 @@ tempData.push(
 temp
 );
 
-
 waterChart.update();
 
 tempChart.update();
-
-
-if(water>85){
-
-document
-.getElementById(
-"alarm"
-)
-.innerHTML=
-
-"Высокий уровень сточных вод";
-
-
-document
-.getElementById(
-"statusLamp"
-)
-.className=
-
-"red";
-
-
-addEvent(
-"Предупреждение"
-);
-
-}
-
-else{
-
-document
-.getElementById(
-"alarm"
-)
-.innerHTML=
-
-"Аварий не обнаружено";
-
-
-document
-.getElementById(
-"statusLamp"
-)
-.className=
-
-"green";
-
-}
 
 },3000)
 
