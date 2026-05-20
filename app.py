@@ -1,11 +1,3 @@
-from reportlab.platypus import SimpleDocTemplate
-from reportlab.platypus import Paragraph
-from reportlab.platypus import Spacer
-
-from reportlab.lib import styles
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.cidfonts import UnicodeCIDFont
-
 from flask import Flask
 from flask import render_template
 from flask import request
@@ -15,6 +7,19 @@ from flask import send_file
 
 from flask_sqlalchemy import SQLAlchemy
 
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle
+)
+
+from reportlab.lib import styles
+from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+
 from datetime import datetime
 
 import random
@@ -23,80 +28,66 @@ import os
 
 app = Flask(__name__)
 
-app.secret_key="wastewater_secret"
+app.secret_key = "wastewater_secret"
 
 
-database_url=os.environ.get(
-"DATABASE_URL"
+database_url = os.environ.get(
+    "DATABASE_URL"
 )
 
 if database_url:
 
-    database_url=database_url.replace(
-
-    "postgresql://",
-
-    "postgresql+psycopg2://",
-
-    1
-
+    database_url = database_url.replace(
+        "postgresql://",
+        "postgresql+psycopg2://",
+        1
     )
 
 
 app.config[
 "SQLALCHEMY_DATABASE_URI"
-]=database_url
+] = database_url
 
 
 app.config[
 "SQLALCHEMY_TRACK_MODIFICATIONS"
-]=False
+] = False
 
 
-db=SQLAlchemy(app)
+db = SQLAlchemy(app)
 
 
 
 class History(db.Model):
 
-    id=db.Column(
-
-    db.Integer,
-
-    primary_key=True
-
+    id = db.Column(
+        db.Integer,
+        primary_key=True
     )
 
-
-    water=db.Column(
-    db.Integer
+    water = db.Column(
+        db.Integer
     )
 
-
-    temperature=db.Column(
-    db.Integer
+    temperature = db.Column(
+        db.Integer
     )
 
 
 
 class Alarm(db.Model):
 
-    id=db.Column(
-
-    db.Integer,
-
-    primary_key=True
-
+    id = db.Column(
+        db.Integer,
+        primary_key=True
     )
 
-
-    message=db.Column(
-    db.String(200)
+    message = db.Column(
+        db.String(200)
     )
 
-
-    time=db.Column(
-    db.String(50)
+    time = db.Column(
+        db.String(50)
     )
 
 
@@ -107,7 +98,7 @@ with app.app_context():
 
 
 
-data={
+data = {
 
 "modicon":"Подключен",
 "br":"Подключен",
@@ -136,7 +127,6 @@ def login():
 
     error=""
 
-
     if request.method=="POST":
 
         username=request.form.get(
@@ -146,7 +136,6 @@ def login():
         password=request.form.get(
         "password"
         )
-
 
         if username=="admin" and password=="12345":
 
@@ -158,7 +147,7 @@ def login():
 
         else:
 
-            error="Неверный логин"
+            error="Неверный логин или пароль"
 
 
     return render_template(
@@ -185,7 +174,6 @@ def dashboard():
     95
     )
 
-
     temperature=random.randint(
     20,
     30
@@ -199,7 +187,6 @@ def dashboard():
     temperature=temperature
 
     )
-
 
     db.session.add(
     record
@@ -290,41 +277,35 @@ def report():
 
     file="report.pdf"
 
-
     doc=SimpleDocTemplate(
-    file
+        file
     )
 
 
     pdfmetrics.registerFont(
 
-    UnicodeCIDFont(
-    "STSong-Light"
-    )
+        UnicodeCIDFont(
+        "STSong-Light"
+        )
 
     )
 
 
     style=styles.getSampleStyleSheet()
 
-
     style["Title"].fontName="STSong-Light"
-
     style["Heading2"].fontName="STSong-Light"
-
     style["Normal"].fontName="STSong-Light"
 
 
-
     content=[]
-
 
 
     content.append(
 
     Paragraph(
 
-    "Отчёт системы очистки бытовых сточных вод",
+    "ОТЧЁТ СИСТЕМЫ ОЧИСТКИ БЫТОВЫХ СТОЧНЫХ ВОД",
 
     style["Title"]
 
@@ -334,12 +315,38 @@ def report():
 
 
     content.append(
-
-    Spacer(
-    1,
-    20
+    Spacer(1,20)
     )
 
+
+    content.append(
+
+    Paragraph(
+
+    f"Дата: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}",
+
+    style["Normal"]
+
+    )
+
+    )
+
+
+    content.append(
+
+    Paragraph(
+
+    "Объект: Очистные сооружения бытовых сточных вод",
+
+    style["Normal"]
+
+    )
+
+    )
+
+
+    content.append(
+    Spacer(1,20)
     )
 
 
@@ -350,16 +357,6 @@ def report():
 
     ).limit(
     10
-    ).all()
-
-
-
-    alarms=Alarm.query.order_by(
-
-    Alarm.id.desc()
-
-    ).limit(
-    5
     ).all()
 
 
@@ -377,31 +374,75 @@ def report():
     )
 
 
+    table_data=[]
+
+
+    table_data.append(
+
+    [
+    "Уровень",
+    "Температура"
+    ]
+
+    )
+
 
     for row in history:
 
-        content.append(
+        table_data.append(
 
-        Paragraph(
+        [
 
-        f"Уровень: {row.water}% | Температура: {row.temperature}°C",
+        f"{row.water}%",
 
-        style["Normal"]
+        f"{row.temperature}°C"
+
+        ]
 
         )
 
-        )
+
+    table=Table(
+    table_data
+    )
+
+
+    table.setStyle(
+
+    TableStyle([
+
+    ('GRID',(0,0),(-1,-1),1,colors.black),
+
+    ('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
+
+    ('FONTNAME',(0,0),(-1,-1),'STSong-Light'),
+
+    ('ALIGN',(0,0),(-1,-1),'CENTER')
+
+    ])
+
+    )
+
+
+    content.append(
+    table
+    )
 
 
 
     content.append(
-
-    Spacer(
-    1,
-    20
+    Spacer(1,20)
     )
 
-    )
+
+
+    alarms=Alarm.query.order_by(
+
+    Alarm.id.desc()
+
+    ).limit(
+    5
+    ).all()
 
 
 
@@ -418,21 +459,74 @@ def report():
     )
 
 
+    alarm_data=[]
+
+
+    alarm_data.append(
+
+    [
+    "Время",
+    "Событие"
+    ]
+
+    )
+
 
     for alarm in alarms:
 
-        content.append(
+        alarm_data.append(
 
-        Paragraph(
-
-        f"{alarm.time}: {alarm.message}",
-
-        style["Normal"]
-
-        )
+        [
+        alarm.time,
+        alarm.message
+        ]
 
         )
 
+
+    alarm_table=Table(
+    alarm_data
+    )
+
+
+    alarm_table.setStyle(
+
+    TableStyle([
+
+    ('GRID',(0,0),(-1,-1),1,colors.black),
+
+    ('BACKGROUND',(0,0),(-1,0),(-1,0),colors.lightgrey),
+
+    ('FONTNAME',(0,0),(-1,-1),'STSong-Light'),
+
+    ('ALIGN',(0,0),(-1,-1),'CENTER')
+
+    ])
+
+    )
+
+
+    content.append(
+    alarm_table
+    )
+
+
+    content.append(
+    Spacer(1,40)
+    )
+
+
+    content.append(
+
+    Paragraph(
+
+    "Подпись оператора: __________________",
+
+    style["Normal"]
+
+    )
+
+    )
 
 
     doc.build(
@@ -441,11 +535,8 @@ def report():
 
 
     return send_file(
-
     file,
-
     as_attachment=True
-
     )
 
 
