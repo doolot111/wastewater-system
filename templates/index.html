@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Система очистки бытовых сточных вод</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static',filename='style.css') }}">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="header">
+
+<h1>Система очистки бытовых сточных вод</h1>
+
+</div>
+
+
+<div class="status-panel">
+
+<div class="status-item">
+
+<span id="statusLamp" class="green"></span>
+
+Система активна
+
+</div>
+
+<div class="status-item">
+
+Modicon Micro
+
+</div>
+
+<div class="status-item">
+
+B&R Minicontrol
+
+</div>
+
+<div class="status-item">
+
+TC65
+
+</div>
+
+<div id="clock"></div>
+
+</div>
+
+
+<div class="container">
+
+<div class="card">
+
+<h2>Оборудование</h2>
+
+<p>Modicon Micro:
+{{data.modicon}}</p>
+
+<p>B&R Minicontrol:
+{{data.br}}</p>
+
+<p>Siemens TC65:
+{{data.tc65}}</p>
+
+<p>Оператор:
+{{data.operator}}</p>
+
+<p>Уровень сигнала:
+{{data.signal}}</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Технологические параметры</h2>
+
+<p>
+
+Уровень сточных вод:
+
+<span id="water">
+
+{{data.water_level}}
+
+</span>
+
+%
+
+</p>
+
+<p>
+
+Температура:
+
+<span id="temp">
+
+{{data.temperature}}
+
+</span>
+
+°C
+
+</p>
+
+<p>
+
+Расход:
+
+{{data.flow}}
+
+м³/ч
+
+</p>
+
+<p>
+
+pH:
+
+{{data.ph}}
+
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Исполнительные устройства</h2>
+
+<p>
+
+Насос №1:
+
+<span id="pump">
+
+{{data.pump1}}
+
+</span>
+
+</p>
+
+<p>
+
+Насос №2:
+
+{{data.pump2}}
+
+</p>
+
+<p>
+
+Аэратор:
+
+{{data.aerator}}
+
+</p>
+
+<p>
+
+Режим:
+
+{{data.mode}}
+
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Управление</h2>
+
+<button onclick="pumpOn()">
+
+Включить насос
+
+</button>
+
+<button onclick="pumpOff()">
+
+Выключить насос
+
+</button>
+
+<button onclick="refreshData()">
+
+Обновить
+
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h2>Аварии</h2>
+
+<p id="alarm">
+
+Аварий не обнаружено
+
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h2>Журнал событий</h2>
+
+<div id="events">
+
+<p>Система запущена</p>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h2>График уровня воды</h2>
+
+<canvas id="waterChart"></canvas>
+
+</div>
+
+
+<div class="card">
+
+<h2>График температуры</h2>
+
+<canvas id="tempChart"></canvas>
+
+</div>
+
+</div>
+
+
+<script>
+
+function updateClock(){
+
+let now=new Date();
+
+document.getElementById(
+"clock"
+).innerHTML=
+
+now.toLocaleTimeString();
+
+}
+
+setInterval(
+updateClock,
+1000
+);
+
+updateClock();
+
+
+
+function addEvent(text){
+
+let time=
+new Date()
+.toLocaleTimeString();
+
+document
+.getElementById(
+"events"
+)
+.innerHTML +=
+
+"<p>"+
+
+time+
+
+" : "+
+
+text+
+
+"</p>";
+
+}
+
+
+
+function pumpOn(){
+
+document
+.getElementById(
+"pump"
+)
+.innerHTML=
+
+"Включен";
+
+
+addEvent(
+"Насос включен"
+);
+
+}
+
+
+
+function pumpOff(){
+
+document
+.getElementById(
+"pump"
+)
+.innerHTML=
+
+"Выключен";
+
+
+addEvent(
+"Насос выключен"
+);
+
+}
+
+
+
+function refreshData(){
+
+addEvent(
+"Данные обновлены"
+);
+
+}
+
+
+
+const waterData=[68];
+const tempData=[24];
+
+const waterChart=
+
+new Chart(
+
+document.getElementById(
+"waterChart"
+),
+
+{
+
+type:'line',
+
+data:{
+
+labels:['1'],
+
+datasets:[{
+
+label:'Уровень воды',
+
+data:waterData
+
+}]
+
+}
+
+}
+
+);
+
+
+const tempChart=
+
+new Chart(
+
+document.getElementById(
+"tempChart"
+),
+
+{
+
+type:'line',
+
+data:{
+
+labels:['1'],
+
+datasets:[{
+
+label:'Температура',
+
+data:tempData
+
+}]
+
+}
+
+}
+
+);
+
+
+setInterval(()=>{
+
+
+let water=
+
+60+
+
+Math.floor(
+Math.random()*30
+);
+
+
+let temp=
+
+20+
+
+Math.floor(
+Math.random()*10
+);
+
+
+document
+.getElementById(
+"water"
+)
+.innerHTML=
+
+water;
+
+
+document
+.getElementById(
+"temp"
+)
+.innerHTML=
+
+temp;
+
+
+waterData.push(
+water
+);
+
+tempData.push(
+temp
+);
+
+
+waterChart.update();
+
+tempChart.update();
+
+
+if(water>85){
+
+document
+.getElementById(
+"alarm"
+)
+.innerHTML=
+
+"Высокий уровень сточных вод";
+
+
+document
+.getElementById(
+"statusLamp"
+)
+.className=
+
+"red";
+
+
+addEvent(
+"Предупреждение"
+);
+
+}
+
+else{
+
+document
+.getElementById(
+"alarm"
+)
+.innerHTML=
+
+"Аварий не обнаружено";
+
+
+document
+.getElementById(
+"statusLamp"
+)
+.className=
+
+"green";
+
+}
+
+},3000)
+
+</script>
+
+</body>
+
+</html>
