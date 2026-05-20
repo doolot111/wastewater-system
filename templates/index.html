@@ -449,6 +449,43 @@ document.getElementById(
 </tr>
 
 {% endfor %}
+<div class="card">
+
+<h2>Журнал аварий</h2>
+
+<table>
+
+<tr>
+
+<th>Время</th>
+
+<th>Сообщение</th>
+
+</tr>
+
+{% for alarm in alarms %}
+
+<tr>
+
+<td>
+
+{{alarm.time}}
+
+</td>
+
+<td>
+
+{{alarm.message}}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
 
 </table>
 

@@ -2,68 +2,100 @@ from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
 import random
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-app.secret_key = "wastewater_secret"
+app.secret_key="wastewater_secret"
 
-# Вместо жёсткой вставки адреса БД используем переменную окружения
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+database_url=os.environ.get(
+    "DATABASE_URL"
+)
 
-db = SQLAlchemy(app)
+if database_url:
+
+    database_url=database_url.replace(
+        "postgresql://",
+        "postgresql+psycopg2://",
+        1
+    )
+
+app.config["SQLALCHEMY_DATABASE_URI"]=database_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=False
+
+db=SQLAlchemy(app)
+
 
 class History(db.Model):
 
-    id = db.Column(
+    id=db.Column(
         db.Integer,
         primary_key=True
     )
 
-    water = db.Column(
+    water=db.Column(
         db.Integer
     )
 
-    temperature = db.Column(
+    temperature=db.Column(
         db.Integer
+    )
+
+
+class Alarm(db.Model):
+
+    id=db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    message=db.Column(
+        db.String(200)
+    )
+
+    time=db.Column(
+        db.String(50)
     )
 
 
 with app.app_context():
+
     db.create_all()
 
 
-data = {
 
-    "modicon":"Подключен",
-    "br":"Подключен",
-    "tc65":"В сети",
-    "operator":"MegaCom",
-    "signal":"25",
+data={
 
-    "flow":"12",
-    "ph":"7.2",
+"modicon":"Подключен",
+"br":"Подключен",
+"tc65":"В сети",
+"operator":"MegaCom",
+"signal":"25",
 
-    "pump1":"Включен",
-    "pump2":"Выключен",
-    "aerator":"Включен",
-    "mode":"Автоматический"
+"flow":"12",
+"ph":"7.2",
+
+"pump1":"Включен",
+"pump2":"Выключен",
+"aerator":"Включен",
+"mode":"Автоматический"
 
 }
 
 
-@app.route("/", methods=["GET","POST"])
+@app.route("/",methods=["GET","POST"])
+
 def login():
 
-    error = ""
+    error=""
 
-    if request.method == "POST":
+    if request.method=="POST":
 
-        username = request.form.get(
+        username=request.form.get(
             "username"
         )
 
-        password = request.form.get(
+        password=request.form.get(
             "password"
         )
 
@@ -77,7 +109,7 @@ def login():
 
         else:
 
-            error="Неверный логин или пароль"
+            error="Неверный логин"
 
     return render_template(
         "login.html",
@@ -85,7 +117,9 @@ def login():
     )
 
 
+
 @app.route("/dashboard")
+
 def dashboard():
 
     if "user" not in session:
@@ -93,18 +127,18 @@ def dashboard():
         return redirect("/")
 
 
-    water = random.randint(
+    water=random.randint(
         60,
-        90
+        95
     )
 
-    temperature = random.randint(
+    temperature=random.randint(
         20,
         30
     )
 
 
-    record = History(
+    record=History(
 
         water=water,
         temperature=temperature
@@ -115,13 +149,40 @@ def dashboard():
         record
     )
 
+
+    if water>85:
+
+        alarm=Alarm(
+
+        message=
+        "Высокий уровень сточных вод",
+
+        time=
+        datetime.now().strftime(
+        "%d.%m.%Y %H:%M:%S"
+        )
+
+        )
+
+        db.session.add(
+            alarm
+        )
+
+
     db.session.commit()
 
 
-    history = History.query.order_by(
+    history=History.query.order_by(
         History.id.desc()
     ).limit(
         10
+    ).all()
+
+
+    alarms=Alarm.query.order_by(
+        Alarm.id.desc()
+    ).limit(
+        5
     ).all()
 
 
@@ -130,13 +191,20 @@ def dashboard():
 
 
     return render_template(
+
         "index.html",
+
         data=data,
-        history=history
+
+        history=history,
+
+        alarms=alarms
+
     )
 
 
 @app.route("/logout")
+
 def logout():
 
     session.clear()
@@ -147,13 +215,13 @@ def logout():
 if __name__=="__main__":
 
     port=int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
+    os.environ.get(
+    "PORT",
+    5000
+    )
     )
 
     app.run(
-        host="0.0.0.0",
-        port=port
+    host="0.0.0.0",
+    port=port
     )
