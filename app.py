@@ -1,77 +1,102 @@
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib import styles
+from reportlab.platypus import SimpleDocTemplate
+from reportlab.platypus import Paragraph
+from reportlab.platypus import Spacer
 
-from flask import Flask, render_template
-from flask import request, redirect
-from flask import session, send_file
+from reportlab.lib import styles
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+
+from flask import Flask
+from flask import render_template
+from flask import request
+from flask import redirect
+from flask import session
+from flask import send_file
 
 from flask_sqlalchemy import SQLAlchemy
+
+from datetime import datetime
 
 import random
 import os
 
-from datetime import datetime
-
 
 app = Flask(__name__)
 
-app.secret_key = "wastewater_secret"
+app.secret_key="wastewater_secret"
 
 
-database_url = os.environ.get(
-    "DATABASE_URL"
+database_url=os.environ.get(
+"DATABASE_URL"
 )
 
 if database_url:
 
-    database_url = database_url.replace(
-        "postgresql://",
-        "postgresql+psycopg2://",
-        1
+    database_url=database_url.replace(
+
+    "postgresql://",
+
+    "postgresql+psycopg2://",
+
+    1
+
     )
 
 
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config[
+"SQLALCHEMY_DATABASE_URI"
+]=database_url
 
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+app.config[
+"SQLALCHEMY_TRACK_MODIFICATIONS"
+]=False
 
 
-db = SQLAlchemy(app)
+db=SQLAlchemy(app)
 
 
 
 class History(db.Model):
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True
+    id=db.Column(
+
+    db.Integer,
+
+    primary_key=True
+
     )
 
-    water = db.Column(
-        db.Integer
+
+    water=db.Column(
+    db.Integer
     )
 
-    temperature = db.Column(
-        db.Integer
+
+    temperature=db.Column(
+    db.Integer
     )
 
 
 
 class Alarm(db.Model):
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True
+    id=db.Column(
+
+    db.Integer,
+
+    primary_key=True
+
     )
 
-    message = db.Column(
-        db.String(200)
+
+    message=db.Column(
+    db.String(200)
     )
 
-    time = db.Column(
-        db.String(50)
+
+    time=db.Column(
+    db.String(50)
     )
 
 
@@ -82,7 +107,7 @@ with app.app_context():
 
 
 
-data = {
+data={
 
 "modicon":"Подключен",
 "br":"Подключен",
@@ -109,17 +134,19 @@ methods=["GET","POST"]
 
 def login():
 
-    error = ""
+    error=""
+
 
     if request.method=="POST":
 
-        username = request.form.get(
+        username=request.form.get(
         "username"
         )
 
-        password = request.form.get(
+        password=request.form.get(
         "password"
         )
+
 
         if username=="admin" and password=="12345":
 
@@ -131,12 +158,15 @@ def login():
 
         else:
 
-            error="Неверный логин или пароль"
+            error="Неверный логин"
 
 
     return render_template(
+
     "login.html",
+
     error=error
+
     )
 
 
@@ -155,6 +185,7 @@ def dashboard():
     95
     )
 
+
     temperature=random.randint(
     20,
     30
@@ -164,6 +195,7 @@ def dashboard():
     record=History(
 
     water=water,
+
     temperature=temperature
 
     )
@@ -194,6 +226,7 @@ def dashboard():
 
 
     db.session.commit()
+
 
 
     history=History.query.order_by(
@@ -257,6 +290,7 @@ def report():
 
     file="report.pdf"
 
+
     doc=SimpleDocTemplate(
     file
     )
@@ -264,9 +298,8 @@ def report():
 
     pdfmetrics.registerFont(
 
-    TTFont(
-    "Vera",
-    "Vera.ttf"
+    UnicodeCIDFont(
+    "STSong-Light"
     )
 
     )
@@ -274,12 +307,17 @@ def report():
 
     style=styles.getSampleStyleSheet()
 
-    style["Title"].fontName="Vera"
-    style["Heading2"].fontName="Vera"
-    style["Normal"].fontName="Vera"
+
+    style["Title"].fontName="STSong-Light"
+
+    style["Heading2"].fontName="STSong-Light"
+
+    style["Normal"].fontName="STSong-Light"
+
 
 
     content=[]
+
 
 
     content.append(
@@ -305,6 +343,7 @@ def report():
     )
 
 
+
     history=History.query.order_by(
 
     History.id.desc()
@@ -312,6 +351,7 @@ def report():
     ).limit(
     10
     ).all()
+
 
 
     alarms=Alarm.query.order_by(
@@ -335,6 +375,7 @@ def report():
     )
 
     )
+
 
 
     for row in history:
@@ -384,13 +425,14 @@ def report():
 
         Paragraph(
 
-        f"{alarm.time} : {alarm.message}",
+        f"{alarm.time}: {alarm.message}",
 
         style["Normal"]
 
         )
 
         )
+
 
 
     doc.build(
@@ -418,6 +460,7 @@ if __name__=="__main__":
     )
 
     )
+
 
     app.run(
 
