@@ -491,19 +491,20 @@ def report():
 
     alarm_table.setStyle(
 
-    TableStyle([
+TableStyle([
 
-    ('GRID',(0,0),(-1,-1),1,colors.black),
+('GRID',(0,0),(-1,-1),1,colors.black),
 
-    ('BACKGROUND',(0,0),(-1,0),(-1,0),colors.lightgrey),
+('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
 
-    ('FONTNAME',(0,0),(-1,-1),'STSong-Light'),
+('FONTNAME',(0,0),(-1,-1),'STSong-Light'),
 
-    ('ALIGN',(0,0),(-1,-1),'CENTER')
+('ALIGN',(0,0),(-1,-1),'CENTER')
 
-    ])
+])
 
-    )
+)
+
 
 
     content.append(
