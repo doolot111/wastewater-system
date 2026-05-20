@@ -1,64 +1,79 @@
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib import styles
-from flask import send_file
-from flask import Flask, render_template, request, redirect, session
+
+from flask import Flask, render_template
+from flask import request, redirect
+from flask import session, send_file
+
 from flask_sqlalchemy import SQLAlchemy
+
 import random
 import os
+
 from datetime import datetime
+
 
 app = Flask(__name__)
 
-app.secret_key="wastewater_secret"
+app.secret_key = "wastewater_secret"
 
-database_url=os.environ.get(
+
+database_url = os.environ.get(
     "DATABASE_URL"
 )
 
 if database_url:
 
-    database_url=database_url.replace(
+    database_url = database_url.replace(
         "postgresql://",
         "postgresql+psycopg2://",
         1
     )
 
-app.config["SQLALCHEMY_DATABASE_URI"]=database_url
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"]=False
 
-db=SQLAlchemy(app)
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+
+db = SQLAlchemy(app)
+
 
 
 class History(db.Model):
 
-    id=db.Column(
+    id = db.Column(
         db.Integer,
         primary_key=True
     )
 
-    water=db.Column(
+    water = db.Column(
         db.Integer
     )
 
-    temperature=db.Column(
+    temperature = db.Column(
         db.Integer
     )
+
 
 
 class Alarm(db.Model):
 
-    id=db.Column(
+    id = db.Column(
         db.Integer,
         primary_key=True
     )
 
-    message=db.Column(
+    message = db.Column(
         db.String(200)
     )
 
-    time=db.Column(
+    time = db.Column(
         db.String(50)
     )
+
 
 
 with app.app_context():
@@ -67,7 +82,7 @@ with app.app_context():
 
 
 
-data={
+data = {
 
 "modicon":"Подключен",
 "br":"Подключен",
@@ -86,20 +101,24 @@ data={
 }
 
 
-@app.route("/",methods=["GET","POST"])
+
+@app.route(
+"/",
+methods=["GET","POST"]
+)
 
 def login():
 
-    error=""
+    error = ""
 
     if request.method=="POST":
 
-        username=request.form.get(
-            "username"
+        username = request.form.get(
+        "username"
         )
 
-        password=request.form.get(
-            "password"
+        password = request.form.get(
+        "password"
         )
 
         if username=="admin" and password=="12345":
@@ -107,16 +126,17 @@ def login():
             session["user"]=username
 
             return redirect(
-                "/dashboard"
+            "/dashboard"
             )
 
         else:
 
-            error="Неверный логин"
+            error="Неверный логин или пароль"
+
 
     return render_template(
-        "login.html",
-        error=error
+    "login.html",
+    error=error
     )
 
 
@@ -131,25 +151,26 @@ def dashboard():
 
 
     water=random.randint(
-        60,
-        95
+    60,
+    95
     )
 
     temperature=random.randint(
-        20,
-        30
+    20,
+    30
     )
 
 
     record=History(
 
-        water=water,
-        temperature=temperature
+    water=water,
+    temperature=temperature
 
     )
 
+
     db.session.add(
-        record
+    record
     )
 
 
@@ -168,7 +189,7 @@ def dashboard():
         )
 
         db.session.add(
-            alarm
+        alarm
         )
 
 
@@ -176,34 +197,43 @@ def dashboard():
 
 
     history=History.query.order_by(
-        History.id.desc()
+
+    History.id.desc()
+
     ).limit(
-        10
+    10
     ).all()
+
 
 
     alarms=Alarm.query.order_by(
-        Alarm.id.desc()
+
+    Alarm.id.desc()
+
     ).limit(
-        5
+    5
     ).all()
 
 
+
     data["water_level"]=water
+
     data["temperature"]=temperature
+
 
 
     return render_template(
 
-        "index.html",
+    "index.html",
 
-        data=data,
+    data=data,
 
-        history=history,
+    history=history,
 
-        alarms=alarms
+    alarms=alarms
 
     )
+
 
 
 @app.route("/logout")
@@ -215,104 +245,184 @@ def logout():
     return redirect("/")
 
 
+
 @app.route("/report")
+
 def report():
 
     if "user" not in session:
+
         return redirect("/")
 
-    file = "report.pdf"
 
-    doc = SimpleDocTemplate(file)
+    file="report.pdf"
 
-    style = styles.getSampleStyleSheet()
-
-    content = []
-
-    content.append(
-        Paragraph(
-            "Отчёт системы очистки бытовых сточных вод",
-            style["Title"]
-        )
-    )
-
-    content.append(
-        Spacer(1,20)
+    doc=SimpleDocTemplate(
+    file
     )
 
 
-    history = History.query.order_by(
-        History.id.desc()
-    ).limit(10).all()
+    pdfmetrics.registerFont(
+
+    TTFont(
+    "Vera",
+    "Vera.ttf"
+    )
+
+    )
 
 
-    alarms = Alarm.query.order_by(
-        Alarm.id.desc()
-    ).limit(5).all()
+    style=styles.getSampleStyleSheet()
+
+    style["Title"].fontName="Vera"
+    style["Heading2"].fontName="Vera"
+    style["Normal"].fontName="Vera"
+
+
+    content=[]
 
 
     content.append(
-        Paragraph(
-            "История параметров",
-            style["Heading2"]
-        )
+
+    Paragraph(
+
+    "Отчёт системы очистки бытовых сточных вод",
+
+    style["Title"]
+
     )
+
+    )
+
+
+    content.append(
+
+    Spacer(
+    1,
+    20
+    )
+
+    )
+
+
+    history=History.query.order_by(
+
+    History.id.desc()
+
+    ).limit(
+    10
+    ).all()
+
+
+    alarms=Alarm.query.order_by(
+
+    Alarm.id.desc()
+
+    ).limit(
+    5
+    ).all()
+
+
+
+    content.append(
+
+    Paragraph(
+
+    "История параметров",
+
+    style["Heading2"]
+
+    )
+
+    )
+
 
     for row in history:
 
         content.append(
 
-            Paragraph(
-                f"Уровень: {row.water}% | Температура: {row.temperature}°C",
-                style["Normal"]
-            )
-
-        )
-
-
-    content.append(
-        Spacer(1,20)
-    )
-
-
-    content.append(
         Paragraph(
-            "Журнал аварий",
-            style["Heading2"]
+
+        f"Уровень: {row.water}% | Температура: {row.temperature}°C",
+
+        style["Normal"]
+
         )
+
+        )
+
+
+
+    content.append(
+
+    Spacer(
+    1,
+    20
     )
+
+    )
+
+
+
+    content.append(
+
+    Paragraph(
+
+    "Журнал аварий",
+
+    style["Heading2"]
+
+    )
+
+    )
+
 
 
     for alarm in alarms:
 
         content.append(
 
-            Paragraph(
-                f"{alarm.time} : {alarm.message}",
-                style["Normal"]
-            )
+        Paragraph(
+
+        f"{alarm.time} : {alarm.message}",
+
+        style["Normal"]
+
+        )
 
         )
 
 
-    doc.build(content)
+    doc.build(
+    content
+    )
+
 
     return send_file(
-        file,
-        as_attachment=True
+
+    file,
+
+    as_attachment=True
+
     )
+
 
 
 if __name__=="__main__":
 
     port=int(
+
     os.environ.get(
     "PORT",
     5000
     )
+
     )
 
     app.run(
+
     host="0.0.0.0",
+
     port=port
+
     )
