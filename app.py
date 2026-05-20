@@ -1,3 +1,6 @@
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib import styles
+from flask import send_file
 from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
 import random
@@ -224,4 +227,90 @@ if __name__=="__main__":
     app.run(
     host="0.0.0.0",
     port=port
+    )
+    @app.route("/report")
+def report():
+
+    if "user" not in session:
+        return redirect("/")
+
+    file = "report.pdf"
+
+    doc = SimpleDocTemplate(file)
+
+    style = styles.getSampleStyleSheet()
+
+    content = []
+
+    content.append(
+        Paragraph(
+            "Отчёт системы очистки бытовых сточных вод",
+            style["Title"]
+        )
+    )
+
+    content.append(
+        Spacer(1,20)
+    )
+
+
+    history = History.query.order_by(
+        History.id.desc()
+    ).limit(10).all()
+
+
+    alarms = Alarm.query.order_by(
+        Alarm.id.desc()
+    ).limit(5).all()
+
+
+    content.append(
+        Paragraph(
+            "История параметров",
+            style["Heading2"]
+        )
+    )
+
+    for row in history:
+
+        content.append(
+
+            Paragraph(
+                f"Уровень: {row.water}% | Температура: {row.temperature}°C",
+                style["Normal"]
+            )
+
+        )
+
+
+    content.append(
+        Spacer(1,20)
+    )
+
+
+    content.append(
+        Paragraph(
+            "Журнал аварий",
+            style["Heading2"]
+        )
+    )
+
+
+    for alarm in alarms:
+
+        content.append(
+
+            Paragraph(
+                f"{alarm.time} : {alarm.message}",
+                style["Normal"]
+            )
+
+        )
+
+
+    doc.build(content)
+
+    return send_file(
+        file,
+        as_attachment=True
     )
