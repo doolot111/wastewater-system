@@ -1,68 +1,71 @@
 from flask import Flask, render_template, request, redirect, session
-import sqlite3
+from flask_sqlalchemy import SQLAlchemy
 import random
 import os
 
 app = Flask(__name__)
 
-app.secret_key="wastewater_secret"
+app.secret_key = "wastewater_secret"
 
-data={
+# Вместо жёсткой вставки адреса БД используем переменную окружения
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-"modicon":"Подключен",
-"br":"Подключен",
-"tc65":"В сети",
-"operator":"MegaCom",
-"signal":"25",
+db = SQLAlchemy(app)
 
-"flow":"12",
-"ph":"7.2",
+class History(db.Model):
 
-"pump1":"Включен",
-"pump2":"Выключен",
-"aerator":"Включен",
-"mode":"Автоматический"
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    water = db.Column(
+        db.Integer
+    )
+
+    temperature = db.Column(
+        db.Integer
+    )
+
+
+with app.app_context():
+    db.create_all()
+
+
+data = {
+
+    "modicon":"Подключен",
+    "br":"Подключен",
+    "tc65":"В сети",
+    "operator":"MegaCom",
+    "signal":"25",
+
+    "flow":"12",
+    "ph":"7.2",
+
+    "pump1":"Включен",
+    "pump2":"Выключен",
+    "aerator":"Включен",
+    "mode":"Автоматический"
 
 }
 
 
-def create_db():
-
-    conn=sqlite3.connect(
-        "system.db"
-    )
-
-    cursor=conn.cursor()
-
-    cursor.execute("""
-
-    CREATE TABLE IF NOT EXISTS history(
-
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    water INTEGER,
-
-    temperature INTEGER
-
-    )
-
-    """)
-
-    conn.commit()
-
-    conn.close()
-
-
-create_db()
-
-
-@app.route("/",methods=["GET","POST"])
+@app.route("/", methods=["GET","POST"])
 def login():
 
-    if request.method=="POST":
+    error = ""
 
-        username=request.form["username"]
-        password=request.form["password"]
+    if request.method == "POST":
+
+        username = request.form.get(
+            "username"
+        )
+
+        password = request.form.get(
+            "password"
+        )
 
         if username=="admin" and password=="12345":
 
@@ -72,8 +75,13 @@ def login():
                 "/dashboard"
             )
 
+        else:
+
+            error="Неверный логин или пароль"
+
     return render_template(
-        "login.html"
+        "login.html",
+        error=error
     )
 
 
@@ -85,67 +93,41 @@ def dashboard():
         return redirect("/")
 
 
-    water=random.randint(
+    water = random.randint(
         60,
         90
     )
 
-    temperature=random.randint(
+    temperature = random.randint(
         20,
         30
     )
 
 
-    conn=sqlite3.connect(
-        "system.db"
-    )
+    record = History(
 
-    cursor=conn.cursor()
-
-    cursor.execute(
-    """
-
-    INSERT INTO history(
-    water,
-    temperature
-    )
-
-    VALUES(?,?)
-
-    """,
-
-    (
-    water,
-    temperature
-    )
+        water=water,
+        temperature=temperature
 
     )
 
-    conn.commit()
-
-
-    cursor.execute(
-    """
-
-    SELECT water,
-    temperature
-
-    FROM history
-
-    ORDER BY id DESC
-
-    LIMIT 10
-
-    """
+    db.session.add(
+        record
     )
 
-    history=cursor.fetchall()
+    db.session.commit()
 
-    conn.close()
+
+    history = History.query.order_by(
+        History.id.desc()
+    ).limit(
+        10
+    ).all()
 
 
     data["water_level"]=water
     data["temperature"]=temperature
+
 
     return render_template(
         "index.html",
