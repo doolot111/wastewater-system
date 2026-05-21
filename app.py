@@ -542,6 +542,37 @@ TableStyle([
 
 
 
+@app.route("/receive", methods=["GET","POST"])
+def receive():
+
+    water = request.values.get(
+        "water"
+    )
+
+    temperature = request.values.get(
+        "temperature"
+    )
+
+    if water and temperature:
+
+        record = History(
+
+            water=int(water),
+            temperature=int(temperature)
+
+        )
+
+        db.session.add(
+            record
+        )
+
+        db.session.commit()
+
+        return "OK"
+
+    return "READY"
+
+
 if __name__=="__main__":
 
     port=int(
@@ -552,7 +583,6 @@ if __name__=="__main__":
     )
 
     )
-
 
     app.run(
 
