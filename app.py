@@ -561,6 +561,16 @@ def receive():
 
     return "READY"
 
+@app.route("/clear")
+def clear():
+
+    History.query.delete()
+    Alarm.query.delete()
+
+    db.session.commit()
+
+    return "База очищена"
+
 
 if __name__=="__main__":
 
