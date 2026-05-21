@@ -161,96 +161,85 @@ def login():
 
 
 @app.route("/dashboard")
-
 def dashboard():
 
     if "user" not in session:
-
         return redirect("/")
 
 
-    water=random.randint(
-    60,
-    95
-    )
-
-    temperature=random.randint(
-    20,
-    30
-    )
+    latest = History.query.order_by(
+        History.id.desc()
+    ).first()
 
 
-    record=History(
+    if latest:
 
-    water=water,
+        water = latest.water
+        temperature = latest.temperature
 
-    temperature=temperature
+    else:
 
-    )
-
-    db.session.add(
-    record
-    )
+        water = 0
+        temperature = 0
 
 
-    if water>85:
+    if water > 85:
 
-        alarm=Alarm(
+        existing_alarm = Alarm.query.order_by(
+            Alarm.id.desc()
+        ).first()
 
-        message=
-        "Высокий уровень сточных вод",
+        if not existing_alarm or existing_alarm.message != "Высокий уровень сточных вод":
 
-        time=
-        datetime.now().strftime(
-        "%d.%m.%Y %H:%M:%S"
-        )
+            alarm = Alarm(
 
-        )
+                message="Высокий уровень сточных вод",
 
-        db.session.add(
-        alarm
-        )
+                time=datetime.now().strftime(
+                    "%d.%m.%Y %H:%M:%S"
+                )
+
+            )
+
+            db.session.add(
+                alarm
+            )
+
+            db.session.commit()
 
 
-    db.session.commit()
+    history = History.query.order_by(
 
-
-
-    history=History.query.order_by(
-
-    History.id.desc()
+        History.id.desc()
 
     ).limit(
-    10
+        10
     ).all()
 
 
+    alarms = Alarm.query.order_by(
 
-    alarms=Alarm.query.order_by(
-
-    Alarm.id.desc()
+        Alarm.id.desc()
 
     ).limit(
-    5
+        5
     ).all()
 
 
+    data["water_level"] = water
 
-    data["water_level"]=water
-
-    data["temperature"]=temperature
-
+    data["temperature"] = temperature
 
 
     return render_template(
 
-    "index.html",
+        "index.html",
 
-    data=data,
+        data=data,
 
-    history=history,
+        history=history,
 
-    alarms=alarms
+        alarms=alarms
 
     )
 
