@@ -570,6 +570,46 @@ def clear():
     db.session.commit()
 
     return "База очищена"
+@app.route("/serial", methods=["GET"])
+def serial():
+
+    data_string = request.args.get(
+        "data"
+    )
+
+    if not data_string:
+        return "No data"
+
+    try:
+
+        values = data_string.split(",")
+
+        water = int(
+            values[0]
+        )
+
+        temperature = int(
+            values[1]
+        )
+
+        record = History(
+
+            water=water,
+            temperature=temperature
+
+        )
+
+        db.session.add(
+            record
+        )
+
+        db.session.commit()
+
+        return "OK"
+
+    except Exception as e:
+
+        return str(e)
 
 
 if __name__=="__main__":
